@@ -1,6 +1,6 @@
-import OpenAI from 'openai';
+import Groq from 'groq-sdk';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export async function buildGenome(recipe: any) {
   const prompt = `
@@ -10,7 +10,7 @@ Recipe: ${recipe.title}
 Ingredients: ${recipe.extendedIngredients?.map((i: any) => i.original).join(', ')}
 Nutrition: ${JSON.stringify(recipe.nutrition?.nutrients?.slice(0, 10))}
 
-Return ONLY valid JSON (no markdown) with this exact shape:
+Return ONLY valid JSON (no markdown, no backticks) with this exact shape:
 {
   "flavor": {
     "score": <0-100>,
@@ -28,7 +28,7 @@ Return ONLY valid JSON (no markdown) with this exact shape:
   },
   "health": {
     "score": <0-100>,
-    "glycemicIndex": <low|medium|high>,
+    "glycemicIndex": "<low|medium|high>",
     "inflammatoryScore": <-10 to 10, negative=anti-inflammatory>,
     "heartScore": <0-100>,
     "diabeticFriendly": <true|false>
@@ -38,18 +38,19 @@ Return ONLY valid JSON (no markdown) with this exact shape:
     "carbonFootprint": <kg CO2 per serving>,
     "waterUsage": <liters per serving>,
     "landUse": <m2 per serving>,
-    "ecoScore": <A|B|C|D|E>
+    "ecoScore": "<A|B|C|D|E>"
   }
 }`;
 
-  const res = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+  const res = await groq.chat.completions.create({
+    model: 'llama-3.3-70b-versatile',
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.3,
   });
 
   const text = res.choices[0].message.content ?? '{}';
-  return JSON.parse(text);
+  const clean = text.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean);
 }
 
 export async function mutateRecipe(recipe: any, genome: any, goal: string) {
@@ -61,11 +62,11 @@ Ingredients: ${recipe.extendedIngredients?.map((i: any) => i.original).join(', '
 Instructions: ${recipe.instructions ?? 'Standard cooking method'}
 Current genome: ${JSON.stringify(genome)}
 
-Return ONLY valid JSON (no markdown) with this exact shape:
+Return ONLY valid JSON (no markdown, no backticks) with this exact shape:
 {
   "mutatedRecipe": {
     "title": "<mutated recipe title>",
-    "ingredients": ["<ingredient 1>", "<ingredient 2>", ...],
+    "ingredients": ["<ingredient 1>", "<ingredient 2>"],
     "instructions": "<brief instructions>",
     "keyChanges": ["<change 1>", "<change 2>", "<change 3>"]
   },
@@ -101,12 +102,13 @@ Return ONLY valid JSON (no markdown) with this exact shape:
   }
 }`;
 
-  const res = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+  const res = await groq.chat.completions.create({
+    model: 'llama-3.3-70b-versatile',
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.5,
   });
 
   const text = res.choices[0].message.content ?? '{}';
-  return JSON.parse(text);
+  const clean = text.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean);
 }
