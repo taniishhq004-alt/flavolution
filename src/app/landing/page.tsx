@@ -1,97 +1,236 @@
 'use client';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+
+const FOOD_RECIPES = [
+  { name: 'Butter Chicken', cuisine: 'Indian', emoji: '🍛', cal: '420 kcal', tag: 'High Protein' },
+  { name: 'Avocado Toast', cuisine: 'American', emoji: '🥑', cal: '280 kcal', tag: 'Vegan' },
+  { name: 'Sushi Platter', cuisine: 'Japanese', emoji: '🍣', cal: '350 kcal', tag: 'Low Fat' },
+  { name: 'Caesar Salad', cuisine: 'Italian', emoji: '🥗', cal: '190 kcal', tag: 'Keto' },
+  { name: 'Chocolate Cake', cuisine: 'French', emoji: '🎂', cal: '520 kcal', tag: 'Indulgent' },
+  { name: 'Pad Thai', cuisine: 'Thai', emoji: '🍜', cal: '380 kcal', tag: 'Gluten Free' },
+  { name: 'Greek Bowl', cuisine: 'Mediterranean', emoji: '🫙', cal: '310 kcal', tag: 'Heart Healthy' },
+  { name: 'Mushroom Risotto', cuisine: 'Italian', emoji: '🍄', cal: '440 kcal', tag: 'Vegetarian' },
+  { name: 'Acai Bowl', cuisine: 'Brazilian', emoji: '🫐', cal: '240 kcal', tag: 'Superfood' },
+  { name: 'Tacos Al Pastor', cuisine: 'Mexican', emoji: '🌮', cal: '390 kcal', tag: 'Spicy' },
+  { name: 'Tom Yum Soup', cuisine: 'Thai', emoji: '🍲', cal: '160 kcal', tag: 'Low Calorie' },
+  { name: 'Shakshuka', cuisine: 'Middle Eastern', emoji: '🍳', cal: '290 kcal', tag: 'Diabetic Friendly' },
+  { name: 'Mango Lassi', cuisine: 'Indian', emoji: '🥭', cal: '180 kcal', tag: 'Probiotic' },
+  { name: 'Falafel Wrap', cuisine: 'Lebanese', emoji: '🫓', cal: '320 kcal', tag: 'Vegan' },
+  { name: 'BBQ Ribs', cuisine: 'American', emoji: '🍖', cal: '610 kcal', tag: 'High Protein' },
+  { name: 'Green Smoothie', cuisine: 'Modern', emoji: '🥤', cal: '140 kcal', tag: 'Detox' },
+];
+
+const FLOATERS = ['🍎','🥦','🍋','🥕','🍇','🌿','🍓','🥑','🫐','🍊','🌾','🥝','🫑','🍅','🧄','🫚'];
 
 export default function LandingPage() {
   const router = useRouter();
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const t = setInterval(() => setActiveIdx(i => (i + 1) % FOOD_RECIPES.length), 1800);
+    return () => clearInterval(t);
+  }, []);
 
   return (
-    <main className="min-h-screen bg-black text-white overflow-hidden">
-      {/* Background grid */}
-      <div className="fixed inset-0 opacity-10"
-        style={{
-          backgroundImage: 'linear-gradient(rgba(0,255,150,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,150,0.3) 1px, transparent 1px)',
-          backgroundSize: '60px 60px'
-        }}
-      />
+    <main className="min-h-screen text-white overflow-x-hidden" style={{
+      background: '#060d06',
+      fontFamily: "'DM Sans', system-ui, sans-serif"
+    }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,900;1,9..40,700&family=Cormorant+Garamond:ital,wght@0,700;1,600&display=swap');
+        @keyframes floatUp {
+          0%   { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+          8%   { opacity: 0.7; }
+          92%  { opacity: 0.4; }
+          100% { transform: translateY(-60px) rotate(720deg); opacity: 0; }
+        }
+        @keyframes fadeSlide {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes glowPulse {
+          0%, 100% { box-shadow: 0 0 40px rgba(74,222,128,0.15); }
+          50%       { box-shadow: 0 0 80px rgba(74,222,128,0.35); }
+        }
+        @keyframes textShimmer {
+          0%   { background-position: 0% center; }
+          100% { background-position: 200% center; }
+        }
+        .floater { position: fixed; pointer-events: none; z-index: 0; animation: floatUp linear infinite; }
+        .shimmer { background: linear-gradient(90deg, #86efac 0%, #4ade80 30%, #bbf7d0 60%, #4ade80 80%, #86efac 100%); background-size: 200%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: textShimmer 4s linear infinite; }
+        .glow-btn { animation: glowPulse 2.5s ease-in-out infinite; }
+        .card-hover { transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), border-color 0.3s; }
+        .card-hover:hover { transform: translateY(-6px) scale(1.03); }
+        .recipe-row { transition: all 0.3s ease; }
+        .fade-slide { animation: fadeSlide 0.6s ease forwards; }
+      `}</style>
 
-      {/* Nav */}
-      <nav className="relative z-10 flex items-center justify-between px-8 py-6">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-emerald-400 flex items-center justify-center text-black font-black text-sm">F</div>
-          <span className="font-black text-xl tracking-tight">FLAVOLUTION</span>
+      {/* Floating food bg */}
+      {mounted && FLOATERS.map((f, i) => (
+        <span key={i} className="floater" style={{
+          left: `${(i / FLOATERS.length) * 100}%`,
+          fontSize: `${1.2 + (i % 3) * 0.4}rem`,
+          animationDuration: `${10 + i * 1.3}s`,
+          animationDelay: `${i * 0.6}s`,
+          opacity: 0,
+        }}>{f}</span>
+      ))}
+
+      {/* Mesh gradient blobs */}
+      <div style={{ position: 'fixed', top: '-10%', left: '-10%', width: '60vw', height: '60vh', background: 'radial-gradient(circle at 30% 40%, rgba(22,163,74,0.12), transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
+      <div style={{ position: 'fixed', bottom: '10%', right: '-5%', width: '50vw', height: '50vh', background: 'radial-gradient(circle at 70% 60%, rgba(202,138,4,0.07), transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
+
+      {/* NAV */}
+      <nav className="relative z-20 flex items-center justify-between px-6 md:px-12 py-6 border-b" style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-2xl" style={{ background: 'linear-gradient(135deg, #166534, #4ade80)' }}>🧬</div>
+          <div>
+            <div className="font-bold text-xl leading-none" style={{ fontFamily: "'Cormorant Garamond', serif", letterSpacing: '-0.02em' }}>Flavolution</div>
+            <div className="text-xs font-medium" style={{ color: '#4ade80' }}>Recipe DNA Engine</div>
+          </div>
         </div>
-        <button
-          onClick={() => router.push('/')}
-          className="border border-emerald-400 text-emerald-400 px-5 py-2 rounded-full text-sm font-semibold hover:bg-emerald-400 hover:text-black transition-all"
-        >
-          Launch App →
-        </button>
+        <div className="flex items-center gap-3">
+          <span className="hidden md:block text-sm px-3 py-1 rounded-full" style={{ background: 'rgba(74,222,128,0.08)', color: '#86efac', border: '1px solid rgba(74,222,128,0.15)' }}>
+            {FOOD_RECIPES.length} recipes ready
+          </span>
+          <button onClick={() => router.push('/')} className="glow-btn px-6 py-2.5 rounded-2xl font-bold text-sm text-black" style={{ background: 'linear-gradient(135deg, #4ade80, #16a34a)' }}>
+            Launch App →
+          </button>
+        </div>
       </nav>
 
-      {/* Hero */}
-      <section className="relative z-10 flex flex-col items-center justify-center text-center px-6 pt-20 pb-32">
-        <div className="inline-flex items-center gap-2 bg-emerald-400/10 border border-emerald-400/30 rounded-full px-4 py-2 text-emerald-400 text-sm font-medium mb-8">
-          <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-          Computational Gastronomy Platform
-        </div>
-
-        <h1 className="text-6xl md:text-8xl font-black leading-none tracking-tighter mb-6">
-          Recipes Have
-          <br />
-          <span className="text-emerald-400">DNA.</span>
-        </h1>
-
-        <p className="text-gray-400 text-xl max-w-xl mb-12 leading-relaxed">
-          We decode every recipe into a 4-dimensional genome — flavor, nutrition, health, and sustainability — then evolve it toward your goals.
-        </p>
-
-        <button
-          onClick={() => router.push('/')}
-          className="bg-emerald-400 text-black font-black text-lg px-10 py-5 rounded-full hover:bg-emerald-300 transition-all transform hover:scale-105 shadow-lg shadow-emerald-400/30"
-        >
-          Start Evolving →
-        </button>
-      </section>
-
-      {/* 4 Genome Dimension Cards */}
-      <section className="relative z-10 max-w-5xl mx-auto px-6 pb-24">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { label: 'Flavor Genome', desc: 'Molecules, pairing compatibility & dominant flavor families', color: 'from-pink-500/20 to-pink-500/5', border: 'border-pink-500/30', dot: 'bg-pink-400' },
-            { label: 'Nutrition Chromosomes', desc: 'Macros, micros, allergens & caloric density', color: 'from-blue-500/20 to-blue-500/5', border: 'border-blue-500/30', dot: 'bg-blue-400' },
-            { label: 'Health Alleles', desc: 'GI index, inflammation score & condition compatibility', color: 'from-yellow-500/20 to-yellow-500/5', border: 'border-yellow-500/30', dot: 'bg-yellow-400' },
-            { label: 'Sustainability Traits', desc: 'Carbon footprint, water usage & eco-score', color: 'from-emerald-500/20 to-emerald-500/5', border: 'border-emerald-500/30', dot: 'bg-emerald-400' },
-          ].map((card) => (
-            <div key={card.label} className={`bg-gradient-to-b ${card.color} border ${card.border} rounded-2xl p-5`}>
-              <div className={`w-3 h-3 rounded-full ${card.dot} mb-4`} />
-              <h3 className="font-bold text-white text-sm mb-2">{card.label}</h3>
-              <p className="text-gray-500 text-xs leading-relaxed">{card.desc}</p>
+      {/* HERO */}
+      <section className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 pt-20 pb-12">
+        <div className="grid md:grid-cols-5 gap-12 items-start">
+          {/* Left: copy */}
+          <div className="md:col-span-3">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold mb-8" style={{ background: 'rgba(22,163,74,0.1)', border: '1px solid rgba(22,163,74,0.25)', color: '#4ade80' }}>
+              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+              Computational Gastronomy · AI-Powered Mutations
             </div>
-          ))}
-        </div>
-      </section>
 
-      {/* How it works */}
-      <section className="relative z-10 max-w-3xl mx-auto px-6 pb-32 text-center">
-        <h2 className="text-3xl font-black mb-12 text-gray-300">How It Works</h2>
-        <div className="flex flex-col md:flex-row items-center gap-4">
-          {[
-            { step: '01', title: 'Search', desc: 'Enter any recipe name' },
-            { step: '02', title: 'Analyze', desc: 'We decode its 4D genome' },
-            { step: '03', title: 'Choose Goal', desc: 'Keto, Vegan, Low-Carbon...' },
-            { step: '04', title: 'Evolve', desc: 'See the before/after genome' },
-          ].map((s, i) => (
-            <div key={s.step} className="flex items-center gap-4">
-              <div className="flex flex-col items-center">
-                <div className="text-emerald-400 font-black text-xs mb-1">{s.step}</div>
-                <div className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 text-center min-w-[100px]">
-                  <div className="font-bold text-white text-sm">{s.title}</div>
-                  <div className="text-gray-500 text-xs mt-1">{s.desc}</div>
+            <h1 className="text-6xl md:text-8xl font-bold leading-none mb-6" style={{ fontFamily: "'Cormorant Garamond', serif", letterSpacing: '-0.03em' }}>
+              Every Recipe<br />
+              <span className="shimmer">Has DNA.</span>
+            </h1>
+
+            <p className="text-lg leading-relaxed mb-10 max-w-lg" style={{ color: '#9ca3af' }}>
+              We decode every dish into a 4-dimensional genome — flavor, nutrition, health & sustainability — then mutate it toward your personal goals in real time.
+            </p>
+
+            <div className="flex flex-wrap gap-4 mb-12">
+              <button onClick={() => router.push('/')} className="glow-btn px-8 py-4 rounded-2xl font-bold text-black text-base" style={{ background: 'linear-gradient(135deg, #4ade80, #16a34a)' }}>
+                Decode a Recipe 🧬
+              </button>
+              <button className="px-8 py-4 rounded-2xl font-bold text-base" style={{ border: '1px solid rgba(255,255,255,0.1)', color: '#e5e7eb' }}>
+                See How It Works →
+              </button>
+            </div>
+
+            {/* Stat pills */}
+            <div className="flex flex-wrap gap-3">
+              {[
+                { icon: '🧬', val: '4D', label: 'Genome Rings' },
+                { icon: '⚡', val: '8+', label: 'Mutation Goals' },
+                { icon: '🆓', val: '100%', label: 'Free to Use' },
+                { icon: '🤖', val: 'AI', label: 'Powered by LLaMA' },
+              ].map(s => (
+                <div key={s.val} className="flex items-center gap-2 px-4 py-2 rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <span>{s.icon}</span>
+                  <span className="font-black text-green-400 text-sm">{s.val}</span>
+                  <span className="text-gray-500 text-xs">{s.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: Live recipe feed */}
+          <div className="md:col-span-2">
+            <div className="rounded-3xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(22,163,74,0.08), rgba(6,13,6,0.9))', border: '1px solid rgba(74,222,128,0.12)' }}>
+              <div className="px-5 py-4 border-b" style={{ borderColor: 'rgba(74,222,128,0.1)' }}>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+                  <span className="text-xs font-bold tracking-wider" style={{ color: '#4ade80' }}>LIVE — RECIPE FEED</span>
                 </div>
               </div>
-              {i < 3 && <div className="text-gray-700 font-bold hidden md:block">→</div>}
+              <div className="p-3 space-y-1.5 max-h-96 overflow-y-auto">
+                {FOOD_RECIPES.map((r, i) => (
+                  <div key={r.name} onClick={() => router.push('/')}
+                    className="recipe-row flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer"
+                    style={{
+                      background: activeIdx === i ? 'rgba(74,222,128,0.1)' : 'transparent',
+                      border: `1px solid ${activeIdx === i ? 'rgba(74,222,128,0.2)' : 'transparent'}`,
+                    }}>
+                    <span className="text-xl">{r.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm text-white truncate">{r.name}</div>
+                      <div className="text-xs" style={{ color: '#6b7280' }}>{r.cuisine} · {r.cal}</div>
+                    </div>
+                    <span className="text-xs px-2 py-0.5 rounded-full shrink-0" style={{ background: 'rgba(74,222,128,0.08)', color: '#86efac', border: '1px solid rgba(74,222,128,0.12)' }}>
+                      {r.tag}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ALL RECIPES GRID */}
+      <section className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 py-16">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <h2 className="text-4xl font-bold" style={{ fontFamily: "'Cormorant Garamond', serif" }}>Evolve Any of These</h2>
+            <p className="mt-1 text-sm" style={{ color: '#6b7280' }}>Click any recipe to start analyzing its genome</p>
+          </div>
+          <div className="text-sm font-bold px-4 py-2 rounded-2xl" style={{ background: 'rgba(74,222,128,0.08)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.15)' }}>
+            {FOOD_RECIPES.length} Recipes
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          {FOOD_RECIPES.map((r, i) => (
+            <div key={r.name} onClick={() => router.push('/')}
+              className="card-hover rounded-2xl p-4 cursor-pointer group"
+              style={{ background: 'linear-gradient(135deg, #0d180d, #0a120a)', border: '1px solid rgba(74,222,128,0.08)' }}>
+              <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-300 inline-block">{r.emoji}</div>
+              <div className="font-bold text-sm text-white mb-0.5">{r.name}</div>
+              <div className="text-xs mb-3" style={{ color: '#6b7280' }}>{r.cuisine} · {r.cal}</div>
+              <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: 'rgba(74,222,128,0.08)', color: '#86efac', border: '1px solid rgba(74,222,128,0.12)' }}>
+                🧬 {r.tag}
+              </span>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* 4 GENOME DIMENSIONS */}
+      <section className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 pb-24">
+        <h2 className="text-4xl font-bold text-center mb-10" style={{ fontFamily: "'Cormorant Garamond', serif" }}>The 4 Genome Dimensions</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: 'Flavor Genome', desc: 'Molecules, pairing & dominant flavor families', icon: '👅', color: '#f472b6', bg: 'rgba(236,72,153,0.07)', border: 'rgba(236,72,153,0.15)' },
+            { label: 'Nutrition DNA', desc: 'Macros, micros, allergens & caloric density', icon: '⚗️', color: '#60a5fa', bg: 'rgba(96,165,250,0.07)', border: 'rgba(96,165,250,0.15)' },
+            { label: 'Health Alleles', desc: 'GI index, inflammation & condition scores', icon: '❤️', color: '#facc15', bg: 'rgba(250,204,21,0.07)', border: 'rgba(250,204,21,0.15)' },
+            { label: 'Eco Traits', desc: 'Carbon footprint, water & eco-score', icon: '🌍', color: '#4ade80', bg: 'rgba(74,222,128,0.07)', border: 'rgba(74,222,128,0.15)' },
+          ].map(d => (
+            <div key={d.label} className="card-hover rounded-2xl p-5" style={{ background: d.bg, border: `1px solid ${d.border}` }}>
+              <div className="text-3xl mb-3">{d.icon}</div>
+              <div className="font-bold text-sm mb-2" style={{ color: d.color }}>{d.label}</div>
+              <div className="text-xs leading-relaxed" style={{ color: '#6b7280' }}>{d.desc}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="text-center mt-16">
+          <button onClick={() => router.push('/')} className="glow-btn px-14 py-5 rounded-2xl font-black text-xl text-black" style={{ background: 'linear-gradient(135deg, #4ade80, #16a34a)' }}>
+            Start Evolving Your Recipe 🧬
+          </button>
+          <p className="mt-3 text-sm" style={{ color: '#4b5563' }}>Free forever · No signup needed · Powered by AI</p>
         </div>
       </section>
     </main>
