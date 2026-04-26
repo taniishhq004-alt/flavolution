@@ -35,13 +35,18 @@ export default function LandingPage() {
     return () => clearInterval(t);
   }, []);
 
+  // Click recipe → go to search page with query param → auto-analyze
+  function handleRecipeClick(recipeName: string) {
+    router.push(`/?q=${encodeURIComponent(recipeName)}`);
+  }
+
   return (
     <main className="min-h-screen text-white overflow-x-hidden" style={{
       background: '#060d06',
       fontFamily: "'DM Sans', system-ui, sans-serif"
     }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,900;1,9..40,700&family=Cormorant+Garamond:ital,wght@0,700;1,600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,900&family=Cormorant+Garamond:ital,wght@0,700;1,600&display=swap');
         @keyframes floatUp {
           0%   { transform: translateY(110vh) rotate(0deg); opacity: 0; }
           8%   { opacity: 0.6; }
@@ -62,7 +67,6 @@ export default function LandingPage() {
         .recipe-row { transition: all 0.3s ease; }
       `}</style>
 
-      {/* Floating food bg */}
       {mounted && FLOATERS.map((f, i) => (
         <span key={i} className="floater" style={{
           left: `${(i / FLOATERS.length) * 100}%`,
@@ -73,7 +77,6 @@ export default function LandingPage() {
         }}>{f}</span>
       ))}
 
-      {/* Gradient blobs */}
       <div style={{ position: 'fixed', top: '-10%', left: '-10%', width: '60vw', height: '60vh', background: 'radial-gradient(circle at 30% 40%, rgba(22,163,74,0.12), transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
       <div style={{ position: 'fixed', bottom: '10%', right: '-5%', width: '50vw', height: '50vh', background: 'radial-gradient(circle at 70% 60%, rgba(202,138,4,0.07), transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
 
@@ -114,9 +117,6 @@ export default function LandingPage() {
               <button onClick={() => router.push('/')} className="glow-btn px-8 py-4 rounded-2xl font-bold text-black text-base" style={{ background: 'linear-gradient(135deg, #4ade80, #16a34a)' }}>
                 Decode a Recipe 🧬
               </button>
-              <button className="px-8 py-4 rounded-2xl font-bold text-base" style={{ border: '1px solid rgba(255,255,255,0.1)', color: '#e5e7eb' }}>
-                See How It Works →
-              </button>
             </div>
             <div className="flex flex-wrap gap-3">
               {[
@@ -134,19 +134,23 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Live feed */}
+          {/* Live feed - clicking auto-analyzes */}
           <div className="md:col-span-2">
             <div className="rounded-3xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(22,163,74,0.08), rgba(6,13,6,0.9))', border: '1px solid rgba(74,222,128,0.12)' }}>
               <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(74,222,128,0.1)' }}>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
-                  <span className="text-xs font-bold tracking-wider" style={{ color: '#4ade80' }}>LIVE — RECIPE FEED</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+                    <span className="text-xs font-bold tracking-wider" style={{ color: '#4ade80' }}>LIVE — CLICK TO ANALYZE</span>
+                  </div>
+                  <span className="text-xs" style={{ color: '#374151' }}>tap any recipe →</span>
                 </div>
               </div>
               <div className="p-3 space-y-1.5 max-h-96 overflow-y-auto">
                 {FOOD_RECIPES.map((r, i) => (
-                  <div key={r.name} onClick={() => router.push('/')}
-                    className="recipe-row flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer"
+                  <div key={r.name}
+                    onClick={() => handleRecipeClick(r.name)}
+                    className="recipe-row flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer group"
                     style={{
                       background: activeIdx === i ? 'rgba(74,222,128,0.1)' : 'transparent',
                       border: `1px solid ${activeIdx === i ? 'rgba(74,222,128,0.2)' : 'transparent'}`,
@@ -156,9 +160,12 @@ export default function LandingPage() {
                       <div className="font-semibold text-sm text-white truncate">{r.name}</div>
                       <div className="text-xs" style={{ color: '#6b7280' }}>{r.cuisine} · {r.cal}</div>
                     </div>
-                    <span className="text-xs px-2 py-0.5 rounded-full shrink-0" style={{ background: 'rgba(74,222,128,0.08)', color: '#86efac', border: '1px solid rgba(74,222,128,0.12)' }}>
-                      {r.tag}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs px-2 py-0.5 rounded-full shrink-0" style={{ background: 'rgba(74,222,128,0.08)', color: '#86efac', border: '1px solid rgba(74,222,128,0.12)' }}>
+                        {r.tag}
+                      </span>
+                      <span className="text-xs opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: '#4ade80' }}>🧬</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -172,7 +179,7 @@ export default function LandingPage() {
         <div className="flex items-end justify-between mb-10">
           <div>
             <h2 className="text-4xl font-bold" style={{ fontFamily: "'Cormorant Garamond', serif" }}>Evolve Any of These</h2>
-            <p className="mt-1 text-sm" style={{ color: '#6b7280' }}>Hover to see the 3D effect · Click to start analyzing</p>
+            <p className="mt-1 text-sm" style={{ color: '#6b7280' }}>Click any card → auto-analyzes instantly 🧬</p>
           </div>
           <div className="text-sm font-bold px-4 py-2 rounded-2xl" style={{ background: 'rgba(74,222,128,0.08)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.15)' }}>
             {FOOD_RECIPES.length} Recipes
@@ -181,7 +188,7 @@ export default function LandingPage() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
           {FOOD_RECIPES.map((r) => (
-            <div key={r.name} onClick={() => router.push('/')} className="cursor-pointer">
+            <div key={r.name} onClick={() => handleRecipeClick(r.name)} className="cursor-pointer">
               <CardContainer className="inter-var w-full">
                 <CardBody
                   className="relative group/card w-full h-auto rounded-2xl p-4"
@@ -189,41 +196,35 @@ export default function LandingPage() {
                     background: 'linear-gradient(135deg, #0d180d, #0a120a)',
                     border: '1px solid rgba(74,222,128,0.1)',
                     width: '100%',
-                  } as any}
+                  }}
                 >
-                  {/* Food image */}
                   <CardItem translateZ="80" className="w-full">
                     <img
                       src={r.img}
                       alt={r.name}
                       className="w-full h-32 object-cover rounded-xl"
                       style={{ border: '1px solid rgba(74,222,128,0.1)' }}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                   </CardItem>
 
-                  {/* Emoji floats above on hover */}
                   <CardItem translateZ="100" translateX={10} translateY={-10} className="absolute top-2 right-2 text-3xl">
                     {r.emoji}
                   </CardItem>
 
-                  {/* Title */}
                   <CardItem translateZ="50" className="mt-3 font-bold text-sm text-white w-full block">
                     {r.name}
                   </CardItem>
 
-                  {/* Cuisine + cal */}
                   <CardItem as="p" translateZ="40" className="text-xs mt-1 w-full" style={{ color: '#6b7280' }}>
                     {r.cuisine} · {r.cal}
                   </CardItem>
 
-                  {/* Tag */}
-                  <CardItem translateZ="60" className="mt-3 block">
+                  <CardItem translateZ="60" className="mt-3 flex items-center justify-between w-full">
                     <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: 'rgba(74,222,128,0.08)', color: '#86efac', border: '1px solid rgba(74,222,128,0.12)' }}>
                       🧬 {r.tag}
                     </span>
+                    <span className="text-xs font-bold" style={{ color: '#4ade80' }}>Analyze →</span>
                   </CardItem>
                 </CardBody>
               </CardContainer>
@@ -249,7 +250,6 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
-
         <div className="text-center mt-16">
           <button onClick={() => router.push('/')} className="glow-btn px-14 py-5 rounded-2xl font-black text-xl text-black" style={{ background: 'linear-gradient(135deg, #4ade80, #16a34a)' }}>
             Start Evolving Your Recipe 🧬

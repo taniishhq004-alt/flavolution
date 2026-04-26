@@ -1,6 +1,6 @@
 'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { storage } from '@/lib/storage';
 
 function GenomeRing({ label, score, color, icon, details }: any) {
@@ -14,7 +14,8 @@ function GenomeRing({ label, score, color, icon, details }: any) {
           <circle cx="50" cy="50" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
           <circle cx="50" cy="50" r={r} fill="none" stroke={color} strokeWidth="7"
             strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
-            transform="rotate(-90 50 50)" style={{ transition: 'stroke-dasharray 1.2s cubic-bezier(0.34,1.56,0.64,1)', filter: `drop-shadow(0 0 8px ${color}60)` }} />
+            transform="rotate(-90 50 50)"
+            style={{ transition: 'stroke-dasharray 1.2s cubic-bezier(0.34,1.56,0.64,1)', filter: `drop-shadow(0 0 8px ${color}60)` }} />
           <text x="50" y="46" textAnchor="middle" fill="white" fontSize="18" fontWeight="900">{score}</text>
           <text x="50" y="60" textAnchor="middle" fill={color} fontSize="8" fontWeight="600">/100</text>
         </svg>
@@ -30,8 +31,9 @@ function GenomeRing({ label, score, color, icon, details }: any) {
   );
 }
 
-export default function MainPage() {
+function MainContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -39,8 +41,10 @@ export default function MainPage() {
   const [genome, setGenome] = useState<any>(null);
   const [activeStep, setActiveStep] = useState<number | null>(null);
 
-  async function handleAnalyze() {
-    if (!query.trim()) return;
+  async function handleAnalyze(searchQuery?: string) {
+    const q = searchQuery || query;
+    if (!q.trim()) return;
+    setQuery(q);
     setLoading(true);
     setError('');
     setRecipe(null);
@@ -50,7 +54,7 @@ export default function MainPage() {
       const res = await fetch('/api/recipe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query: q }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -65,15 +69,20 @@ export default function MainPage() {
     }
   }
 
-  // Parse instructions into steps
+  // Auto-analyze if ?q= param present
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q) {
+      setQuery(q);
+      handleAnalyze(q);
+    }
+  }, [searchParams]);
+
   const parseSteps = (instructions: string): string[] => {
     if (!instructions) return [];
-    // Remove HTML tags
     const clean = instructions.replace(/<[^>]+>/g, '').trim();
-    // Split by numbered steps or sentences
     const numbered = clean.match(/\d+\.\s+[^.!?]+[.!?]*/g);
     if (numbered && numbered.length > 1) return numbered.map(s => s.replace(/^\d+\.\s*/, '').trim());
-    // Split by sentences
     return clean.split(/(?<=[.!?])\s+/).filter(s => s.length > 10).slice(0, 8);
   };
 
@@ -86,7 +95,6 @@ export default function MainPage() {
     }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;500;700;900&family=Cormorant+Garamond:ital,wght@0,700;1,600&display=swap');
-        @keyframes scanline { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
         @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
         .fade-up { animation: fadeUp 0.5s ease forwards; }
         .step-card { transition: all 0.3s ease; }
@@ -94,12 +102,11 @@ export default function MainPage() {
         .search-glow:focus-within { box-shadow: 0 0 0 2px rgba(251,191,36,0.4), 0 0 40px rgba(251,191,36,0.1); }
       `}</style>
 
-      {/* Amber blob */}
       <div style={{ position: 'fixed', top: '20%', right: '10%', width: '40vw', height: '40vh', background: 'radial-gradient(circle, rgba(217,119,6,0.08), transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
 
       {/* NAV */}
       <nav className="relative z-20 flex items-center justify-between px-6 md:px-12 py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-        <button onClick={() => router.push('/landing')} className="flex items-center gap-3 group">
+        <button onClick={() => router.push('/landing')} className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xl" style={{ background: 'linear-gradient(135deg, #92400e, #fbbf24)' }}>🧬</div>
           <div>
             <div className="font-bold text-base leading-none" style={{ fontFamily: "'Cormorant Garamond', serif" }}>Flavolution</div>
@@ -107,7 +114,6 @@ export default function MainPage() {
           </div>
         </button>
         <div className="flex items-center gap-2 text-sm" style={{ color: '#6b7280' }}>
-          <span>Step</span>
           <span className="w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs" style={{ background: 'rgba(251,191,36,0.2)', color: '#fbbf24' }}>1</span>
           <span style={{ color: '#374151' }}>→</span>
           <span>2</span>
@@ -130,7 +136,7 @@ export default function MainPage() {
               onKeyDown={e => e.key === 'Enter' && handleAnalyze()}
               placeholder="e.g. Butter Chicken, Avocado Toast..."
               className="flex-1 bg-transparent px-4 py-3 text-white placeholder-gray-600 outline-none text-sm" />
-            <button onClick={handleAnalyze} disabled={loading || !query.trim()}
+            <button onClick={() => handleAnalyze()} disabled={loading || !query.trim()}
               className="px-6 py-3 rounded-xl font-bold text-sm text-black disabled:opacity-40 transition-all hover:scale-105"
               style={{ background: 'linear-gradient(135deg, #fbbf24, #d97706)' }}>
               {loading ? '⏳ Analyzing...' : '🧬 Analyze DNA'}
@@ -149,7 +155,7 @@ export default function MainPage() {
           <div className="text-center py-20">
             <div className="inline-flex flex-col items-center gap-4">
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl animate-bounce" style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)' }}>🧬</div>
-              <div className="font-bold" style={{ color: '#fbbf24' }}>Sequencing recipe genome...</div>
+              <div className="font-bold" style={{ color: '#fbbf24' }}>Sequencing genome for "{query}"...</div>
               <div className="text-sm" style={{ color: '#4b5563' }}>Analyzing flavor, nutrition, health & sustainability</div>
             </div>
           </div>
@@ -158,7 +164,6 @@ export default function MainPage() {
         {/* RESULTS */}
         {recipe && genome && !loading && (
           <div className="space-y-6 fade-up">
-
             {/* Recipe card */}
             <div className="rounded-3xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(251,191,36,0.12)' }}>
               <div className="flex gap-6 p-6">
@@ -208,7 +213,7 @@ export default function MainPage() {
               </div>
             )}
 
-            {/* STEP-BY-STEP RECIPE */}
+            {/* Step-by-step instructions */}
             {steps.length > 0 && (
               <div className="rounded-3xl p-6" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div className="text-xs font-bold tracking-widest mb-5" style={{ color: '#6b7280' }}>STEP-BY-STEP INSTRUCTIONS</div>
@@ -265,7 +270,7 @@ export default function MainPage() {
             <p className="text-lg font-medium mb-2" style={{ color: '#4b5563' }}>Search for a recipe to begin</p>
             <div className="flex flex-wrap justify-center gap-2 mt-4">
               {['Butter Chicken', 'Caesar Salad', 'Avocado Toast', 'Pad Thai', 'Shakshuka'].map(s => (
-                <button key={s} onClick={() => { setQuery(s); }}
+                <button key={s} onClick={() => handleAnalyze(s)}
                   className="text-xs px-3 py-1.5 rounded-full transition-all hover:scale-105"
                   style={{ background: 'rgba(251,191,36,0.06)', color: '#78716c', border: '1px solid rgba(251,191,36,0.1)' }}>
                   {s}
@@ -276,5 +281,18 @@ export default function MainPage() {
         )}
       </div>
     </main>
+  );
+}
+
+// Wrap in Suspense because useSearchParams requires it in Next.js
+export default function MainPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0c0800' }}>
+        <div className="text-2xl animate-bounce">🧬</div>
+      </div>
+    }>
+      <MainContent />
+    </Suspense>
   );
 }
