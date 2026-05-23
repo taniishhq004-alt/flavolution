@@ -26,6 +26,7 @@
     "recharts": "^3.7.0",
     "tailwind-merge": "^3.5.0",
     "tailwindcss-animate": "^1.0.7",
+    "unicornstudio-react": "^2.1.9",
     "zustand": "^5.0.11"
   },
   "devDependencies": {
